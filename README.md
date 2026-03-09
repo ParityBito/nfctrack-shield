@@ -186,42 +186,26 @@ npm start
 
 ### Environment Variables
 
-Required environment variables:
+Copy `.env.example` to `.env` and fill in the required values:
 
-```env
-# Authentication
-KEYCLOAK_DOMAIN=your-keycloak-domain.com
-KEYCLOAK_REALM=your-realm
-KEYCLOAK_CLIENT_ID=your-client-id
-KEYCLOAK_CLIENT_SECRET=your-client-secret
-
-# API Configuration
-API_URL=https://api.your-domain.com
-API_ANON_KEY=your-anonymous-key
-
-# AWS Services
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your-access-key
-AWS_SECRET_ACCESS_KEY=your-secret-key
-
-# Application
-SESSION_SECRET=your-session-secret
-APP_URL=https://your-app-domain.com
+```bash
+cp .env.example .env
 ```
 
-### Docker Deployment
+Key environment variable groups:
 
-```dockerfile
-# Example Dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
-```
+| Group | Variables | Purpose |
+|---|---|---|
+| Authentication | `CLIENT_ID`, `CLIENT_SECRET`, `ISSUER_URL`, `USERINFO_URL`, `LOGOUT_URL`, `REDIRECT_URL` | Keycloak OAuth2/OIDC |
+| Session | `SESSION_SECRET`, `COOKIE_SECRET` | Cookie signing and encryption |
+| API | `API_BASE_URL` | Backend API URL |
+| AWS | `AWS_ACCESS_KEY_ID`, `AWS_ACCESS_KEY_SECRET`, `AWS_REGION`, `AWS_PUBLIC_*`, `AWS_PRIVATE_*` | S3 storage and CloudFront CDN |
+| Image Processing | `IMAGE_PROCESSING_CDN_HOST`, `IMAGE_PROCESSING_KEY`, `IMAGE_PROCESSING_SALT` | imgproxy image transformation |
+| External Services | `ZIPCODESTACK_API_KEY`, `GOOGLE_MAPS_API_KEY` | Address lookup and maps |
+| Monitoring | `SENTRY_ENVIRONMENT`, `SENTRY_AUTH_TOKEN` | Error tracking |
+| App | `APP_HOST`, `PORT` | Application URL and port |
+
+See `.env.example` for the full list with descriptions.
 
 ## 🧪 Testing
 
@@ -240,7 +224,23 @@ Test files should be colocated with components:
 - `my-component.tsx`
 - `my-component.test.tsx`
 
-## 📚 Additional Resources
+## 📚 Documentation
+
+### Internal Docs
+
+- [Local Development Setup](docs/setup-guide.md) — Step-by-step setup for new developers
+- [Architecture & Data Model](docs/architecture.md) — System architecture, entity relationships, and route map
+- [API Integration Guide](docs/api-integration.md) — Server-side and client-side data loading patterns
+- [Authentication & Authorization](docs/authentication.md) — Keycloak SSO, RBAC, and permissions
+- [State Management](docs/state-management.md) — AppState, contexts, TanStack Query, and Zustand usage
+- [Form Handling Patterns](docs/form-patterns.md) — React Hook Form + Zod, submission strategies, validation
+- [Testing Guide](docs/testing.md) — Jest setup, patterns, and conventions
+- [UI Component Library](docs/ui-components.md) — Base components, usage patterns, and conventions
+- [Deployment](docs/deployment.md) — Build, production server, environments, CI/CD, monitoring
+- [Architecture Decisions](docs/decisions.md) — Key technology choices and rationale
+- [Invitation System API Spec](docs/invitation-system-api-spec.md) — Endpoint specification for invitations
+
+### External References
 
 - [React Router v7 Documentation](https://reactrouter.com/v7/docs)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
@@ -249,11 +249,12 @@ Test files should be colocated with components:
 
 ## 🤝 Contributing
 
-1. Create a feature branch from `main`
-2. Make your changes following the code style
-3. Add tests for new functionality
-4. Ensure all tests pass and linting is clean
-5. Submit a pull request with a clear description
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+
+- Branch naming and commit conventions
+- Code style and component patterns
+- Pull request process
+- Testing requirements
 
 ## 📄 License
 
