@@ -75,7 +75,10 @@ export default function ManufacturerDetailsForm({
 
   return (
     <FormProvider {...form}>
-      <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
+      <form className="flex min-h-0 flex-1 flex-col" onSubmit={(e) => {
+          e.stopPropagation();
+          form.handleSubmit(handleSubmit)(e);
+        }}>
         <ResponsiveModalBody className="space-y-4">
           <Input type="hidden" {...form.register("id")} hidden />
           <ActiveToggleFormInput />
