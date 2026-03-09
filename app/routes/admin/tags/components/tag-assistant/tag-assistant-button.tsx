@@ -47,8 +47,8 @@ export default function TagAssistantButton({ trigger, open: openProp, onOpenChan
             Use this assistant to guide you through the process of programming new tags.
           </ResponsiveModalDescription>
         </ResponsiveModalHeader>
-        <ResponsiveModalBody disableScrollArea>
-          <div className="flex-1 min-h-0 overflow-hidden">
+        <ResponsiveModalBody disableScrollArea className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-hidden sm:h-128 sm:flex-initial">
             <TagAssistant onClose={() => setOpen(false)} />
           </div>
         </ResponsiveModalBody>

@@ -50,12 +50,13 @@ export default function WelcomeOnboarding({ showWelcome }: WelcomeOnboardingProp
         <ResponsiveModalHeader>
           <ResponsiveModalTitle>
             <span className="flex items-center gap-1">
-              <Hand className="animate-sway size-5 rotate-45" /> Welcome{isFirstTime ? "!" : " back!"}
+              <Hand className="animate-sway size-5 rotate-45" /> Welcome
+              {isFirstTime ? "!" : " back!"}
             </span>
           </ResponsiveModalTitle>
         </ResponsiveModalHeader>
-        <ResponsiveModalBody disableScrollArea>
-          <div className="flex-1 min-h-0 overflow-hidden">
+        <ResponsiveModalBody disableScrollArea className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-hidden sm:h-128 sm:flex-initial">
             {isFirstTime ? (
               <FirstTimeOnboarding clientName={clientName} onClose={handleDismiss} />
             ) : (
