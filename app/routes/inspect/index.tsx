@@ -18,7 +18,7 @@ import {
   fetchActiveInspectionRouteContext,
   validateInspectionSession,
 } from "~/.server/inspections";
-import { commitInspectionSession, getSession, inspectionSessionStorage } from "~/.server/sessions";
+import { commitInspectionSession, getInspectionSession } from "~/.server/sessions";
 import { refreshUserSession } from "~/.server/user-sesssion";
 import AssetCard from "~/components/assets/asset-card";
 import AssetQuestionFieldLabel from "~/components/assets/asset-question-field-label";
@@ -67,7 +67,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const ipAddress = getClientIPAddress(request);
 
   const qp = getSearchParams(request);
-  const inspectionSession = await getSession(request, inspectionSessionStorage);
+  const inspectionSession = await getInspectionSession(request);
 
   const inspectionToken = inspectionSession.get("inspectionToken");
 

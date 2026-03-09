@@ -1,8 +1,7 @@
 import { redirect } from "react-router";
 import {
   commitInspectionSession,
-  getSession,
-  inspectionSessionStorage,
+  getInspectionSession,
   setAppState,
   type InspectionSession as InspectionCookieSession,
 } from "~/.server/sessions";
@@ -14,7 +13,7 @@ export const validateInspectionSession = async (
   request: Request,
   session?: InspectionCookieSession
 ) => {
-  const inspectionSession = session ?? (await getSession(request, inspectionSessionStorage));
+  const inspectionSession = session ?? (await getInspectionSession(request));
 
   const inspectionToken = inspectionSession.get("inspectionToken");
 
@@ -77,7 +76,7 @@ export const validateTagRequestAndBuildSession = async (request: Request, redire
     inspectionToken = inspectionTokenFromSignature;
   }
 
-  const inspectionSession = await getSession(request, inspectionSessionStorage);
+  const inspectionSession = await getInspectionSession(request);
 
   if (extId) {
     // Step 3 (part A): If there is no valid signature, but the tag ID is present, validate the tag ID.

@@ -7,13 +7,14 @@ import { toast } from "sonner";
 import { api } from "~/.server/api";
 import { buildImageProxyUrl } from "~/.server/images";
 import { getNextPointFromSession } from "~/.server/inspections";
-import { commitInspectionSession, getSession, inspectionSessionStorage } from "~/.server/sessions";
+import { commitInspectionSession, getInspectionSession } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
 import DisplayInspectionValue from "~/components/assets/display-inspection-value";
 import {
   getSuppliesForProductQuery,
   NewSupplyRequestButton,
 } from "~/components/assets/product-requests";
+import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
@@ -45,7 +46,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const showSuccessfulInspection = success !== null;
 
   let activeSessionId: string | null | undefined = getSearchParam(request, "sessionId");
-  const inspectionSession = await getSession(request, inspectionSessionStorage);
+  const inspectionSession = await getInspectionSession(request);
 
   if (activeSessionId) {
     inspectionSession.set("activeSession", activeSessionId);
@@ -66,35 +67,46 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     : undefined;
 
   if (activeSessionId) {
-    const { session, nextPoint, allRemainingSkipped } = await api.inspections
-      .getSession(request, activeSessionId)
-      .then((session) => ({
+    try {
+      const { session, nextPoint, allRemainingSkipped } = await api.inspections
+        .getSession(request, activeSessionId)
+        .then((session) => ({
+          session,
+          ...getNextPointFromSession(session, undefined, { skipAssetIds }),
+        }));
+
+      let nextAsset: Asset | null = null;
+      if (nextPoint) {
+        nextAsset = await api.assets.get(request, nextPoint.assetId);
+      }
+
+      let processedProductImageUrl: string | null | undefined = null;
+      if (nextAsset?.product.imageUrl) {
+        processedProductImageUrl = buildImageProxyUrl(nextAsset.product.imageUrl, [
+          "rs:fit:160:160:1:1",
+        ]);
+      }
+
+      return {
         session,
-        ...getNextPointFromSession(session, undefined, { skipAssetIds }),
-      }));
-
-    let nextAsset: Asset | null = null;
-    if (nextPoint) {
-      nextAsset = await api.assets.get(request, nextPoint.assetId);
+        nextPoint,
+        nextAsset,
+        showSuccessfulInspection,
+        inspection,
+        processedProductImageUrl,
+        allRemainingSkipped,
+        currentSkipAssetIds: skipAssetIdsParam ?? "",
+      };
+    } catch (e) {
+      // If session can't be found, likely due to stale session cache after switching client contexts,
+      // unset session and continue without it.
+      if (e instanceof Response && e.status === 404) {
+        inspectionSession.unset("activeSession");
+        await commitInspectionSession(inspectionSession);
+      } else {
+        throw e;
+      }
     }
-
-    let processedProductImageUrl: string | null | undefined = null;
-    if (nextAsset?.product.imageUrl) {
-      processedProductImageUrl = buildImageProxyUrl(nextAsset.product.imageUrl, [
-        "rs:fit:160:160:1:1",
-      ]);
-    }
-
-    return {
-      session,
-      nextPoint,
-      nextAsset,
-      showSuccessfulInspection,
-      inspection,
-      processedProductImageUrl,
-      allRemainingSkipped,
-      currentSkipAssetIds: skipAssetIdsParam ?? "",
-    };
   }
 
   return {
@@ -108,6 +120,15 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     currentSkipAssetIds: "",
   };
 };
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  const { user } = useAuth();
+  return (
+    <main className="grid grow place-items-center px-6 py-24 sm:py-32 lg:px-8">
+      <InspectErrorBoundary error={error} user={user} />
+    </main>
+  );
+}
 
 export default function InspectNext({
   loaderData: {

@@ -26,15 +26,6 @@ export const getSession = async <T = SessionData>(
   return sessionStorage.getSession(request.headers.get("cookie"));
 };
 
-export const getSessionValue = async <T = SessionData>(
-  request: Request,
-  sessionStorage: SessionStorage<T>,
-  key: keyof T & string
-) => {
-  const session = await getSession(request, sessionStorage);
-  return session.get(key);
-};
-
 // THEME MANAGEMENT
 
 const themeSessionStorage = createCookieSessionStorage({
@@ -51,7 +42,7 @@ const themeSessionStorage = createCookieSessionStorage({
 export const themeSessionResolver = createThemeSessionResolver(themeSessionStorage);
 
 // APP STATE STORAGE
-export const appStateSessionStorage = createCookieSessionStorage<AppState>({
+const appStateSessionStorage = createCookieSessionStorage<AppState>({
   cookie: {
     name: "__appState",
     path: "/",
@@ -106,7 +97,7 @@ export interface InspectionCookieValue {
   inspectionToken?: string;
 }
 
-export const inspectionSessionStorage = createCookieSessionStorage<InspectionCookieValue>({
+const inspectionSessionStorage = createCookieSessionStorage<InspectionCookieValue>({
   cookie: {
     name: "__inspection",
     path: "/",
@@ -118,6 +109,20 @@ export const inspectionSessionStorage = createCookieSessionStorage<InspectionCoo
 });
 
 export type InspectionSession = Awaited<ReturnType<typeof inspectionSessionStorage.getSession>>;
+
+export const getInspectionSession = async (request: Request) => {
+  try {
+    // Try to use in-flight session first from previous commits.
+    const committedSession = cookieStore.get("inspection");
+    if (committedSession) {
+      return inspectionSessionStorage.getSession(committedSession);
+    } else {
+      throw new Error("No in-flight inspection session found in cookies.");
+    }
+  } catch (e) {
+    return inspectionSessionStorage.getSession(request.headers.get("cookie"));
+  }
+};
 
 export const commitInspectionSession = async (session: InspectionSession) => {
   const sessionCookie = await inspectionSessionStorage.commitSession(session);
