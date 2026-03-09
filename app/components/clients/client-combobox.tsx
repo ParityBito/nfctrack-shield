@@ -1,7 +1,7 @@
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DataOrError } from "~/.server/api-utils";
-import { useAccessIntent } from "~/contexts/requested-access-context";
+import { useRequestedAccessContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Client, ResultsPage, Site } from "~/lib/models";
 import { type QueryParams } from "~/lib/urls";
@@ -32,7 +32,7 @@ export default function ClientCombobox({
   onClientChange,
   placeholder,
 }: ClientComboboxProps) {
-  const accessIntent = useAccessIntent();
+  const { accessIntent, currentClientId } = useRequestedAccessContext();
   const onClientChangeRef = useRef(onClientChange);
   onClientChangeRef.current = onClientChange;
 
@@ -62,6 +62,11 @@ export default function ClientCombobox({
       load({
         path: "/api/proxy/clients",
         query,
+      });
+    } else if (accessIntent === "elevated" && currentClientId) {
+      load({
+        path: "/api/proxy/clients",
+        query: { id: currentClientId },
       });
     } else {
       load({
