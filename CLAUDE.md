@@ -1,5 +1,22 @@
 # Shield Development Guide
 
+## Documentation
+
+Detailed docs are in the `docs/` directory:
+
+- [Local Development Setup](docs/setup-guide.md) — Prerequisites, environment config, troubleshooting
+- [Architecture & Data Model](docs/architecture.md) — System architecture, entity relationships, route map
+- [API Integration Guide](docs/api-integration.md) — Server-side and client-side data loading patterns
+- [Authentication & Authorization](docs/authentication.md) — Keycloak SSO, RBAC, permissions
+- [State Management](docs/state-management.md) — AppState cookies, contexts, TanStack Query, Zustand
+- [Form Handling Patterns](docs/form-patterns.md) — React Hook Form + Zod, useModalFetcher, validation
+- [Testing Guide](docs/testing.md) — Jest setup, patterns, conventions
+- [UI Component Library](docs/ui-components.md) — Base components, usage patterns
+- [Deployment](docs/deployment.md) — Build, production server, environments, CI/CD
+- [Architecture Decisions](docs/decisions.md) — Key technology choices and rationale
+
+Also see: [CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md), [.env.example](.env.example)
+
 ## Quick Start Commands
 
 ### Development
@@ -48,14 +65,17 @@ npm start
 
 ```
 shield/
-├── app/              # Main application code
-│   ├── components/   # React components
-│   ├── routes/       # React Router route modules
-│   ├── lib/          # Utilities and helpers
-│   ├── styles/       # Global styles
-│   └── types/        # TypeScript type definitions
-├── public/           # Static assets
-└── tests/           # Test files
+├── app/
+│   ├── .server/       # Server-only code (api, auth, config, sessions)
+│   ├── components/    # React components (ui/, admin/, assets/, etc.)
+│   ├── contexts/      # React contexts (auth, app-state, access grant)
+│   ├── hooks/         # Custom React hooks
+│   ├── lib/           # Models, types, schemas, utilities
+│   ├── routes/        # React Router route modules
+│   └── styles/        # Global styles
+├── docs/              # Project documentation
+├── public/            # Static assets
+└── tests/             # Test files
 ```
 
 ## MCP Tools Configuration
@@ -80,6 +100,7 @@ When using Serena MCP tools, always activate the project using the Docker path:
 2. Follow existing component patterns using Radix UI primitives
 3. Use TypeScript interfaces for props
 4. Style with Tailwind CSS v4
+5. See [UI Component Library](docs/ui-components.md) for conventions
 
 ### Adding a New Route
 
@@ -90,15 +111,16 @@ When using Serena MCP tools, always activate the project using the Docker path:
 
 ### Working with Forms
 
-- Use React Router's Form component for server-side form handling
-- Implement proper validation using zod schemas
-- Follow existing patterns in components like `update-user-role-form.tsx`
+- Most forms use `useModalFetcher` for client-side submission via `/api/proxy/*`
+- Validation uses React Hook Form + Zod (`zodResolver`)
+- Schemas are defined in `app/lib/schema.ts`
+- See [Form Handling Patterns](docs/form-patterns.md) for full details
 
 ### API Integration
 
-- API routes are defined in `app/lib/shield-api.ts`
-- Use React Query hooks for data fetching (see `app/lib/api-hooks.ts`)
-- Follow existing patterns for error handling and loading states
+- **Server-side**: API endpoints are defined in `app/.server/api.ts` using `ApiFetcher` and `CRUD` builders
+- **Client-side (preferred for new features)**: TanStack Query with service files in `app/lib/services/*.service.ts`, using `useAuthenticatedFetch` hook for auth
+- See [API Integration Guide](docs/api-integration.md) for full details
 
 ## Key Libraries & Patterns
 
@@ -111,21 +133,26 @@ When using Serena MCP tools, always activate the project using the Docker path:
 
 ### State Management
 
-- **Zustand**: For client-side state (see `app/lib/stores/`)
-- **React Query**: For server state and caching
-- **React Router**: For route-based state via loaders/actions
+- **TanStack Query**: For server data (API responses), with service layer in `app/lib/services/`
+- **AppState (cookies)**: For persistent UI preferences (dashboard filters, sidebar state, active client)
+- **React Context**: For shared state (auth, active access grant, requested access)
+- **Zustand**: For component-scoped multi-step wizard state only
+- See [State Management](docs/state-management.md) for when to use what
 
 ### Form Handling
 
-- **React Hook Form**: For complex forms
-- **Zod**: For schema validation
-- **Server Actions**: Via React Router actions
+- **React Hook Form**: For form state and validation
+- **Zod**: For schema validation (shared between client and server)
+- **useModalFetcher**: Primary submission hook (posts to `/api/proxy/*`)
+- **remix-hook-form**: Bridge for React Router server actions (limited use)
 
 ### Authentication
 
-- Keycloak SSO integration
-- Role-based access control (RBAC)
+- Keycloak SSO integration via OAuth2/OIDC
+- Role-based access control (RBAC) with scope hierarchy
+- Multi-client access with client switching
 - Protected routes with proper redirects
+- See [Authentication & Authorization](docs/authentication.md)
 
 ## React Router 7 Architecture
 
@@ -168,8 +195,8 @@ export default function Users({ loaderData }: Route.ComponentProps) {
 |---------|---------|----------------|
 | Server code | `"use server"` directive | `loader`/`action` exports |
 | Client code | `"use client"` directive | All components hydrate by default |
-| Data fetching | Server Components or API routes | Loaders |
-| Mutations | Server Actions | Actions via `<Form>` |
+| Data fetching | Server Components or API routes | Loaders + TanStack Query |
+| Mutations | Server Actions | Actions via `<Form>` or `useModalFetcher` |
 
 ### Client-Only Code
 
@@ -191,28 +218,11 @@ function ClientOnlyFeature() {
 }
 ```
 
-## Development Tips
-
-1. **Type Safety**: Always define TypeScript types for props, API responses, and form data
-2. **Component Patterns**: Follow existing patterns in `app/components/` for consistency
-3. **Error Handling**: Use error boundaries and proper error states in components
-4. **Accessibility**: Use semantic HTML and Radix UI for accessible components
-5. **Performance**: Use React Router's deferred data loading for non-critical data
-
-## Testing Guidelines
-
-1. Write tests for critical business logic
-2. Use React Testing Library for component tests
-3. Mock API calls using MSW or jest mocks
-4. Test both happy paths and error states
-
 ## Environment Variables
 
-Key environment variables used in the project:
+All environment variables are validated by the Zod schema in `app/.server/config.ts`. See `.env.example` for the full list with descriptions.
 
-- `NODE_ENV`: Development/production mode
-- `VITE_*`: Client-side environment variables (see Vite docs)
-- Server-side variables are loaded via React Router's server build
+Key groups: Authentication (Keycloak), API, AWS (S3/CloudFront), Image Processing, External Services, Sentry.
 
 ## Troubleshooting
 
@@ -221,7 +231,7 @@ Key environment variables used in the project:
 1. **Type Errors**: Run `npm run typecheck` to generate React Router types
 2. **Build Failures**: Clear `.cache` and `node_modules/.cache` directories
 3. **Hot Reload Issues**: Restart dev server if HMR stops working
-4. **Test Failures**: Ensure you're mocking external dependencies properly
+4. **Auth Redirect Loop**: Check `REDIRECT_URL` matches your local URL and `CLIENT_SECRET` is correct
 
 ### Useful Debug Commands
 
@@ -230,13 +240,10 @@ Key environment variables used in the project:
 rm -rf node_modules package-lock.json && npm install
 
 # Clear all caches
-rm -rf .cache node_modules/.cache
+rm -rf .cache node_modules/.cache build .react-router
 
 # Check for outdated dependencies
 npm outdated
-
-# Analyze bundle size
-npm run build -- --analyze
 ```
 
 ## Code Style Conventions
@@ -255,11 +262,4 @@ npm run build -- --analyze
 3. Run lint and tests before committing
 4. Keep commits focused and atomic
 5. Write descriptive commit messages
-
-## Performance Optimization
-
-1. Use React Router's deferred loading for non-critical data
-2. Implement proper loading states
-3. Use React.memo for expensive components
-4. Optimize images with proper formats and sizes
-5. Lazy load routes and components where appropriate
+6. See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines
