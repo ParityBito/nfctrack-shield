@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useRequestedAccessContext } from "~/contexts/requested-access-context";
@@ -25,6 +26,7 @@ type TForm = z.infer<typeof createProductCategorySchema | typeof updateProductCa
 interface ProductCategoryDetailsFormProps {
   productCategory?: ProductCategory;
   onSubmitted?: () => void;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const FORM_DEFAULTS = {
@@ -40,6 +42,7 @@ const FORM_DEFAULTS = {
 export default function ProductCategoryDetailsForm({
   productCategory,
   onSubmitted,
+  onDirtyChange,
 }: ProductCategoryDetailsFormProps) {
   const isNew = !productCategory;
   const { currentClientId, accessIntent } = useRequestedAccessContext();
@@ -72,6 +75,10 @@ export default function ProductCategoryDetailsForm({
     formState: { isDirty },
     watch,
   } = form;
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const color = watch("color");
 

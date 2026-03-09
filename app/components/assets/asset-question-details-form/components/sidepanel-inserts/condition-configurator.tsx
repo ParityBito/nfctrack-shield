@@ -320,6 +320,13 @@ function MatchingValueInput({
     let options = valueOptionsRaw ? [...valueOptionsRaw] : [];
 
     options = options.sort((a, b) => {
+      if (
+        a.groupLabelSort !== undefined &&
+        b.groupLabelSort !== undefined &&
+        a.groupLabelSort !== b.groupLabelSort
+      ) {
+        return b.groupLabelSort - a.groupLabelSort;
+      }
       if (a.groupLabel && b.groupLabel && a.groupLabel !== b.groupLabel) {
         return a.groupLabel.localeCompare(b.groupLabel);
       }
@@ -426,6 +433,7 @@ interface ValueOption {
   value: string;
   searchString?: string;
   groupLabel?: string;
+  groupLabelSort?: number;
 }
 
 interface ValueOptionGroup {
@@ -460,13 +468,16 @@ const getValueOptionsForType = async (
         })
       )
         .then((r) => r.json() as Promise<ResultsPage<Manufacturer>>)
-        .then((r) =>
-          r.results.map((m) => ({
+        .then((r) => {
+          const hasCustom = r.results.some((m) => !!m.clientId);
+          return r.results.map((m) => ({
             label: m.name,
             value: m.id,
             searchString: m.name,
-          }))
-        );
+            groupLabel: hasCustom ? (m.clientId ? "Custom" : "Global") : "",
+            groupLabelSort: hasCustom ? (m.clientId ? 1 : 0) : -1,
+          }));
+        });
       break;
     case "PRODUCT_CATEGORY":
       options = await fetcher(
@@ -476,13 +487,16 @@ const getValueOptionsForType = async (
         })
       )
         .then((r) => r.json() as Promise<ResultsPage<ProductCategory>>)
-        .then((r) =>
-          r.results.map((pc) => ({
+        .then((r) => {
+          const hasCustom = r.results.some((pc) => !!pc.clientId);
+          return r.results.map((pc) => ({
             label: pc.name,
             value: pc.id,
             searchString: [pc.name, pc.shortName].filter(Boolean).join(" "),
-          }))
-        );
+            groupLabel: hasCustom ? (pc.clientId ? "Custom" : "Global") : "",
+            groupLabelSort: hasCustom ? (pc.clientId ? 1 : 0) : -1,
+          }));
+        });
       break;
     case "PRODUCT":
       options = await fetcher(
@@ -495,12 +509,16 @@ const getValueOptionsForType = async (
         .then((r) => r.json() as Promise<ResultsPage<Product>>)
         .then((r) =>
           r.results.map((p) => ({
-            label: p.name,
+            label: p.client?.id ? `(Custom) ${p.name}` : p.name,
             value: p.id,
             searchString: [p.name, p.productCategory?.name, p.productCategory?.shortName]
               .filter(Boolean)
               .join(" "),
-            groupLabel: p.productCategory?.name ?? "Other",
+            groupLabel: p.productCategory
+              ? p.productCategory.clientId
+                ? `(Custom) ${p.productCategory.name}`
+                : p.productCategory.name
+              : "Other",
           }))
         );
       break;

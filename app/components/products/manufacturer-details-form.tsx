@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useRequestedAccessContext } from "~/contexts/requested-access-context";
@@ -23,6 +24,7 @@ type TForm = z.infer<typeof createManufacturerSchema | typeof updateManufacturer
 interface ManufacturerDetailsFormProps {
   manufacturer?: Manufacturer;
   onSubmitted?: () => void;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const FORM_DEFAULTS = {
@@ -35,6 +37,7 @@ const FORM_DEFAULTS = {
 export default function ManufacturerDetailsForm({
   manufacturer,
   onSubmitted,
+  onDirtyChange,
 }: ManufacturerDetailsFormProps) {
   const isNew = !manufacturer;
   const { currentClientId, accessIntent } = useRequestedAccessContext();
@@ -61,6 +64,10 @@ export default function ManufacturerDetailsForm({
   const {
     formState: { isDirty },
   } = form;
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,

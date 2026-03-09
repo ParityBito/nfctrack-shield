@@ -6,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useAuth } from "~/contexts/auth-context";
@@ -34,6 +34,7 @@ type TForm = z.infer<typeof createProductSchema | typeof updateProductSchema>;
 export interface ProductDetailsFormProps {
   product?: Product;
   onSubmitted?: () => void;
+  onDirtyChange?: (isDirty: boolean) => void;
   parentProduct?: Product;
   productCategory?: ProductCategory;
   manufacturer?: Manufacturer;
@@ -44,6 +45,7 @@ export interface ProductDetailsFormProps {
 export default function ProductDetailsForm({
   product,
   onSubmitted,
+  onDirtyChange,
   parentProduct,
   productCategory,
   manufacturer,
@@ -115,6 +117,10 @@ export default function ProductDetailsForm({
     formState: { isDirty },
     watch,
   } = form;
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const productType = watch("type");
 

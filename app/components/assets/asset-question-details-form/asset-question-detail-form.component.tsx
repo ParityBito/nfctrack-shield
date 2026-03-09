@@ -63,6 +63,7 @@ type TForm = z.infer<typeof updateAssetQuestionSchema | typeof createAssetQuesti
 export interface AssetQuestionDetailFormProps {
   assetQuestion?: AssetQuestion;
   onSubmitted?: () => void;
+  onDirtyChange?: (isDirty: boolean) => void;
   clientId?: string;
 }
 export default function AssetQuestionDetailForm({
@@ -82,6 +83,7 @@ export default function AssetQuestionDetailForm({
 function AssetQuestionDetailsFormContent({
   assetQuestion,
   onSubmitted,
+  onDirtyChange,
   clientId,
 }: AssetQuestionDetailFormProps) {
   const isNew = !assetQuestion;
@@ -108,8 +110,9 @@ function AssetQuestionDetailsFormContent({
 
   const form = useForm({
     resolver: zodResolver(!isNew ? updateAssetQuestionSchema : createAssetQuestionSchema),
-    values: (!isNew
-      ? {
+    values: (isNew
+      ? FORM_DEFAULTS
+      : {
           ...nullValuesToUndefined(assetQuestion),
           assetAlertCriteria: {
             updateMany: toUpdateMany(assetQuestion.assetAlertCriteria),
@@ -149,9 +152,7 @@ function AssetQuestionDetailsFormContent({
                 },
               }
             : undefined,
-        }
-      : undefined) as TForm | undefined,
-    defaultValues: !isNew ? undefined : (FORM_DEFAULTS as TForm),
+        }) as TForm,
     mode: "onChange",
   });
 
@@ -161,6 +162,10 @@ function AssetQuestionDetailsFormContent({
     getFieldState,
     setValue,
   } = form;
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const type = watch("type");
   const autoSetupSupplyConfigInput = watch("consumableConfig");
