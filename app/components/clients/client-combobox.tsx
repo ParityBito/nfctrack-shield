@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DataOrError } from "~/.server/api-utils";
 import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import type { Client, ResultsPage } from "~/lib/models";
+import type { Client, ResultsPage, Site } from "~/lib/models";
 import { type QueryParams } from "~/lib/urls";
 import { ResponsiveCombobox } from "../responsive-combobox";
 
@@ -41,19 +41,33 @@ export default function ClientCombobox({
     load,
     isLoading,
     data: fetcherData,
-  } = useModalFetcher<DataOrError<ResultsPage<Client>>>({
-    onData: ({ data }) => setClients(data?.results ?? []),
+  } = useModalFetcher<DataOrError<ResultsPage<Client> | { client: Client; site: Site }>>({
+    onData: ({ data }) => {
+      if (!data) {
+        setClients([]);
+      } else if ("client" in data) {
+        setClients([data.client]);
+      } else {
+        setClients(data.results);
+      }
+    },
   });
 
   const preloadClients = useCallback(() => {
-    const query: QueryParams = {
-      limit: 10000,
-      _throw: "false",
-    };
-    load({
-      path: "/api/proxy/clients",
-      query,
-    });
+    if (accessIntent === "system") {
+      const query: QueryParams = {
+        limit: 10000,
+        _throw: "false",
+      };
+      load({
+        path: "/api/proxy/clients",
+        query,
+      });
+    } else {
+      load({
+        path: "/api/proxy/clients/my-organization",
+      });
+    }
   }, [load]);
 
   useEffect(() => {
