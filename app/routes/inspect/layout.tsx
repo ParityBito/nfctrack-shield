@@ -10,7 +10,7 @@ import {
   Route as RouteIcon,
   Trash,
 } from "lucide-react";
-import { data, Link, Outlet, useNavigate } from "react-router";
+import { data, Link, Outlet, useLocation, useNavigate } from "react-router";
 import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { config } from "~/.server/config";
 import { AppSidebar, type SidebarGroup } from "~/components/app-sidebar";
@@ -88,6 +88,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 export default function Layout({
   loaderData: { user, apiUrl, appHost, googleMapsApiKey, clientId },
 }: Route.ComponentProps) {
+  const { pathname } = useLocation();
+  const showClientSwitcher = pathname.startsWith("/inspect/register");
+
   return (
     <AuthProvider
       user={user}
@@ -96,7 +99,7 @@ export default function Layout({
       googleMapsApiKey={googleMapsApiKey}
       clientId={clientId}
     >
-      <ActiveAccessGrantProvider disableSwitching>
+      <ActiveAccessGrantProvider disableSwitching={!showClientSwitcher}>
         <SidebarProvider defaultOpenState={{ help: false }}>
           <HelpSidebarProvider>
             <InspectionSidebar />

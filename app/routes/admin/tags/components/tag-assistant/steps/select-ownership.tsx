@@ -6,7 +6,7 @@ import ClientCombobox from "~/components/clients/client-combobox";
 import SiteCombobox from "~/components/clients/site-combobox";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { useAuth } from "~/contexts/auth-context";
-import { useAccessIntent } from "~/contexts/requested-access-context";
+import { useRequestedAccessContext } from "~/contexts/requested-access-context";
 import { hasMultiClientVisibility } from "~/lib/users";
 import Step from "../../../../../../components/assistant/components/step";
 
@@ -37,14 +37,14 @@ export default function StepSelectOwnership({
   ownershipObjectName?: string;
 }) {
   const { user } = useAuth();
-  const accessIntent = useAccessIntent();
+  const { accessIntent, currentClientId, currentSiteId } = useRequestedAccessContext();
   const canReadClients = hasMultiClientVisibility(user);
 
   const form = useForm<TForm>({
     resolver: zodResolver(selectOwnershipSchema),
     defaultValues: {
-      clientId: clientId ?? "",
-      siteId: siteId ?? "",
+      clientId: clientId ?? currentClientId ?? "",
+      siteId: siteId ?? currentSiteId ?? "",
     },
     mode: "onChange",
   });
