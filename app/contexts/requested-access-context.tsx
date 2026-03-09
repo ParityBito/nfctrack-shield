@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import type { AccessIntent } from "~/.server/api-utils";
 import { useActiveAccessGrant } from "./active-access-grant-context";
 
@@ -40,8 +40,14 @@ export function RequestedAccessContextProvider({
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
 
-  const currentClientId = clientId ?? selectedClientId ?? activeClient?.clientId ?? null;
-  const currentSiteId = siteId ?? selectedSiteId ?? activeClient?.siteId ?? null;
+  const currentClientId = useMemo(
+    () => clientId ?? selectedClientId ?? activeClient?.clientId ?? null,
+    [clientId, selectedClientId, activeClient?.clientId]
+  );
+  const currentSiteId = useMemo(
+    () => siteId ?? selectedSiteId ?? activeClient?.siteId ?? null,
+    [siteId, selectedSiteId, activeClient?.siteId]
+  );
 
   return (
     <RequestedAccessContextContext.Provider

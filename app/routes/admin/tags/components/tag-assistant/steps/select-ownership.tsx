@@ -42,18 +42,26 @@ export default function StepSelectOwnership({
 
   const form = useForm<TForm>({
     resolver: zodResolver(selectOwnershipSchema),
-    values: {
-      clientId: clientId ?? currentClientId ?? "",
-      siteId: siteId ?? currentSiteId ?? "",
+    defaultValues: {
+      clientId: clientId ?? "",
+      siteId: siteId ?? "",
     },
-    mode: "onChange",
   });
 
-  const {
-    formState: { isValid },
-    watch,
-    setValue,
-  } = form;
+  const { watch, setValue } = form;
+
+  useEffect(() => {
+    // Automatically update ownership when access context changes.
+    if (accessIntent !== "system" && currentClientId && currentClientId !== clientId) {
+      setClientId(currentClientId);
+      setValue("clientId", currentClientId);
+      setValue("siteId", currentSiteId ?? "");
+
+      if (currentSiteId && currentSiteId !== siteId) {
+        setSiteId(currentSiteId);
+      }
+    }
+  }, [currentClientId, clientId, currentSiteId, siteId]);
 
   useEffect(() => {
     const subscription = watch(({ siteId, clientId }, { name, type }) => {
@@ -81,9 +89,10 @@ export default function StepSelectOwnership({
       subtitle={`Select a ${canReadClients ? "client and " : ""}site to continue.`}
       onStepBackward={onStepBackward}
       onContinue={() => {
-        onContinue();
+        form.handleSubmit(() => {
+          onContinue();
+        })();
       }}
-      continueDisabled={!isValid}
     >
       <FormProvider {...form}>
         <form onSubmit={() => onContinue()} className="w-full max-w-sm space-y-4 self-center pb-8">

@@ -34,9 +34,19 @@ export const getMyOrganizationFn = async (fetcher: typeof fetch) =>
     (r) => r.json() as Promise<GetMyOrganizationResult>
   );
 
-export const getMyOrganizationQueryOptions = (fetcher: typeof fetch) =>
+export const getMyOrganizationQueryOptions = (
+  fetcher: typeof fetch,
+  activeClient?: {
+    clientId: string | undefined | null;
+    siteId: string | undefined | null;
+  } | null
+) =>
   queryOptions({
-    queryKey: ["my-organization"] as const,
+    queryKey: [
+      "my-organization",
+      activeClient?.clientId ?? "unknown-client",
+      activeClient?.siteId ?? "unknown-site",
+    ] as const,
     queryFn: () => getMyOrganizationFn(fetcher),
   });
 
