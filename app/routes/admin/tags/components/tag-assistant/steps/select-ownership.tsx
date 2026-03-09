@@ -42,7 +42,7 @@ export default function StepSelectOwnership({
 
   const form = useForm<TForm>({
     resolver: zodResolver(selectOwnershipSchema),
-    defaultValues: {
+    values: {
       clientId: clientId ?? currentClientId ?? "",
       siteId: siteId ?? currentSiteId ?? "",
     },
